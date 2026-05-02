@@ -14,7 +14,7 @@ async def fetch_project_data(project_id: int, session):
 
 async def hit_endpoint(client, endpoint_url, input_payload):
     response = await client.post(endpoint_url, json=input_payload)
-    return response.json()
+    return response.text
 
 async def run_eval(eval_id):
     async with AsyncSessionLocal() as session:

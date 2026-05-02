@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, JSON, Boolean
+from sqlalchemy import String, Integer, DateTime, JSON, Boolean, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 from datetime import datetime, timezone
@@ -38,7 +38,7 @@ class GoldenPair(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     input_payload: Mapped[dict] = mapped_column(JSON)
-    expected_output: Mapped[dict] = mapped_column(JSON)
+    expected_output: Mapped[str] = mapped_column(String)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
 
     project: Mapped[Project] = relationship(back_populates="golden_pair")
@@ -60,8 +60,9 @@ class EvalRun(Base):
 class EvalResult(Base):
     __tablename__ = "eval_results"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    actual_output: Mapped[dict] = mapped_column(JSON)
+    actual_output: Mapped[str] = mapped_column(String)
     passed: Mapped[bool] = mapped_column(Boolean)
+    score: Mapped[float | None] = mapped_column(Float)
     reason: Mapped[str] = mapped_column(String)
     golden_pair_id: Mapped[int] = mapped_column(ForeignKey("golden_pairs.id"))
     run_id: Mapped[int] = mapped_column(ForeignKey("eval_runs.id"))

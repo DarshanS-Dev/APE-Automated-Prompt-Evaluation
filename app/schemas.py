@@ -3,8 +3,8 @@ from app.models import EvalStatus
 
 class EvalResultItem(BaseModel):
     input_payload: dict
-    expected_output: dict
-    actual_output: dict
+    expected_output: str
+    actual_output: str
     passed: bool
     reason: str
 
@@ -20,12 +20,12 @@ class ProjectResponse(BaseModel):
 class GoldenPairCreate(BaseModel):
     project_id: int
     input_payload: dict
-    expected_output: dict
+    expected_output: str
 
 class GoldenPairResponse(BaseModel):
     id: int
     input_payload: dict
-    expected_output: dict
+    expected_output: str
 
 class RubricCreate(BaseModel):
     project_id: int

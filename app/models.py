@@ -53,7 +53,6 @@ class EvalRun(Base):
     status: Mapped[EvalStatus] = mapped_column(String, default=EvalStatus.running)
     score: Mapped[float | None] = mapped_column(Float)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
-    compared_to: Mapped[int | None] = mapped_column(ForeignKey("eval_runs.id"))
 
     project: Mapped[Project] = relationship(back_populates="eval_run")
     eval_result: Mapped[list["EvalResult"]] = relationship(back_populates="eval_run") 

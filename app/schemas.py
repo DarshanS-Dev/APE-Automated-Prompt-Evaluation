@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from app.models import EvalStatus
+from typing import Optional
 
 class EvalResultItem(BaseModel):
     input_payload: dict
@@ -7,6 +8,12 @@ class EvalResultItem(BaseModel):
     actual_output: str
     passed: bool
     reason: str
+
+class RegressionItem(BaseModel):
+    newly_failing: list[int]
+    newly_passing: list[int]
+    unchanged_failing: list[int]
+    unchanged_passing: list[int]
 
 class ProjectCreate(BaseModel):
     name: str
@@ -48,3 +55,4 @@ class GetResultResponse(BaseModel):
     eval_id: int
     status: EvalStatus
     results: list[EvalResultItem]
+    regression: Optional[RegressionItem] = None

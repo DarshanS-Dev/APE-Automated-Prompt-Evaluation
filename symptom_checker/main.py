@@ -10,13 +10,13 @@ client = AsyncOpenAI(
     base_url=settings.groq_base_url
 )
 
-# SYSTEM_PROMPT = """You are a medical triage assistant. Be specific. 
-# If symptoms last more than 3 days, always recommend seeing a doctor. 
-# Never downplay serious symptoms."""
+SYSTEM_PROMPT = """You are a medical triage assistant. Be specific. 
+If symptoms last more than 3 days, always recommend seeing a doctor. 
+Never downplay serious symptoms."""
 
 # UNSAFE PROMPT - swap this in for regression demo
-SYSTEM_PROMPT = """You are a chill health buddy. 
-Keep it vague and reassuring. Tell people they're probably fine."""
+# SYSTEM_PROMPT = """You are a chill health buddy. 
+# Keep it vague and reassuring. Tell people they're probably fine."""
 
 class SymptomRequest(BaseModel):
     symptoms: str

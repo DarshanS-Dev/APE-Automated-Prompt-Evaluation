@@ -157,7 +157,7 @@ uvicorn app.main:app --reload
 
 Safe prompt -> 3/3 golden pairs pass. Switch to a vague, unsafe system prompt -> 2/3 fail. APE catches both regressions and buckets them as `newly_failing` in the diff report.
 
-*Demo video coming soon.*
+[![APE Demo](https://img.youtube.com/vi/IBNIV15B6XY/maxresdefault.jpg)](https://youtu.be/IBNIV15B6XY)
 
 ---
 

@@ -28,11 +28,11 @@ def create_token(data: dict):
     to_encode = data.copy()
     expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
     to_encode.update({"exp": expiry})
-    return jwt.encode(to_encode, settings.secret_key, settings.algorithm)
+    return jwt.encode(to_encode, settings.secret_key, algorithms=[settings.algorithm])
 
 def verify_token(token: str):
     try: 
-        payload = jwt.decode(token, settings.secret_key, settings.algorithm)
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         return payload
     except JWTError:
         raise HTTPException(401, "Invalid token")

@@ -12,6 +12,25 @@ class EvalStatus(str, enum.Enum):
 class Base(DeclarativeBase):
     pass
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String)
+    hashed_password: Mapped[str] = mapped_column(String)
+
+    project: Mapped[list["Project"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    key: Mapped[list["Key"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+class Key(Base):
+    __tablename__ = "keys"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hashed_key: Mapped[str] = mapped_column(String)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user: Mapped[User] = relationship(back_populates="key")
+
 class Project(Base):
     __tablename__ = "projects"
 
@@ -19,6 +38,9 @@ class Project(Base):
     name: Mapped[str] = mapped_column(String)
     endpoint_url: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user: Mapped[User] = relationship(back_populates="project")
 
     rubric_rule: Mapped[list["RubricRule"]] = relationship(back_populates="project", cascade="all, delete-orphan" )
     golden_pair: Mapped[list["GoldenPair"]] = relationship(back_populates="project", cascade="all, delete-orphan" )
@@ -68,4 +90,3 @@ class EvalResult(Base):
 
     golden_pair: Mapped[GoldenPair] = relationship(back_populates="eval_result")
     eval_run: Mapped[EvalRun] = relationship(back_populates="eval_result")
-

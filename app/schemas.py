@@ -56,3 +56,13 @@ class GetResultResponse(BaseModel):
     status: EvalStatus
     results: list[EvalResultItem]
     regression: Optional[RegressionItem] = None
+
+class UserInput(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):  
+    token: str  
+
+class ApiKeyResponse(BaseModel):
+    key: str

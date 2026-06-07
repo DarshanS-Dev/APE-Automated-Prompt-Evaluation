@@ -1,6 +1,7 @@
-from jose import jwt, JWTError
+import jwt
+from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
-from passlib.context import CryptContext
+import bcrypt
 import hashlib
 from fastapi import HTTPException, Depends, Header
 from fastapi.security import OAuth2PasswordBearer
@@ -11,18 +12,16 @@ from app.database import get_db
 from app.models import User, Key
 from app.config import settings
 
-oauth2 = OAuth2PasswordBearer(tokenUrl="/auth")
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2 = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def hash_api_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
-def hash_pass(raw: str):
-    return pwd_context.hash(raw)
+def hash_pass(raw: str) -> str:
+    return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()
 
-def verify_pass(raw_password: str, hashed: str):
-    return pwd_context.verify(raw_password, hashed)
+def verify_pass(raw: str, hashed: str) -> bool:
+    return bcrypt.checkpw(raw.encode(), hashed.encode())
 
 def create_token(data: dict):
     to_encode = data.copy()
@@ -31,10 +30,10 @@ def create_token(data: dict):
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 def verify_token(token: str):
-    try: 
+    try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         return payload
-    except JWTError:
+    except InvalidTokenError:          # replaces JWTError
         raise HTTPException(401, "Invalid token")
     
 async def get_current_user_from_api_key(api_key: str = Header(..., alias="X-API-Key"), db: AsyncSession = Depends(get_db)):

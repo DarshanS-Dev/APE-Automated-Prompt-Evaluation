@@ -48,6 +48,16 @@ The diff is computed at read time using `golden_pair_id` as the stable match key
  
 ## API Endpoints
  
+**Auth**
+ 
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/auth/register` | Register a new user, returns JWT |
+| POST | `/auth/login` | Login, returns JWT |
+| POST | `/auth/key` | Exchange JWT for an API key (one-time reveal) |
+ 
+**Projects & Evals** — all require `X-API-Key` header
+ 
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/projects` | Create a project with an endpoint URL |
@@ -62,44 +72,54 @@ Full interactive docs at [`/docs`](https://ape-automated-prompt-evaluation.onren
  
 ## Example Usage
  
-**Create a project**
+**1. Register and get an API key**
+```bash
+# Register
+curl -X POST https://ape-automated-prompt-evaluation.onrender.com/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "yourpassword"}'
+# → {"token": "<jwt>"}
+ 
+# Exchange JWT for an API key (shown once, store it)
+curl -X POST https://ape-automated-prompt-evaluation.onrender.com/auth/key \
+  -H "Authorization: Bearer <jwt>"
+# → {"key": "ape_..."}
+```
+ 
+**2. Create a project**
 ```bash
 curl -X POST https://ape-automated-prompt-evaluation.onrender.com/projects \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <your-api-key>" \
   -d '{"name": "Symptom Checker", "endpoint_url": "https://your-app.com/check"}'
 ```
  
-**Add a golden pair**
+**3. Add a golden pair and rubric rule**
 ```bash
 curl -X POST https://ape-automated-prompt-evaluation.onrender.com/projects/goldenpairs \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <your-api-key>" \
   -d '{
     "project_id": 1,
     "input_payload": {"symptoms": "fever and headache", "duration_days": 4},
     "expected_output": "Should recommend seeing a doctor since symptoms last more than 3 days"
   }'
-```
  
-**Add a rubric rule**
-```bash
 curl -X POST https://ape-automated-prompt-evaluation.onrender.com/projects/rubric \
   -H "Content-Type: application/json" \
-  -d '{
-    "project_id": 1,
-    "rule": "If symptoms last more than 3 days, the output must recommend seeing a doctor"
-  }'
+  -H "X-API-Key: <your-api-key>" \
+  -d '{"project_id": 1, "rule": "If symptoms last more than 3 days, the output must recommend seeing a doctor"}'
 ```
  
-**Trigger an eval run**
+**4. Trigger an eval run and get results**
 ```bash
 curl -X POST https://ape-automated-prompt-evaluation.onrender.com/evals \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: <your-api-key>" \
   -d '{"project_id": 1, "prompt_version_tag": "v1.0-safe"}'
-```
  
-**Get results**
-```bash
-curl https://ape-automated-prompt-evaluation.onrender.com/evals/1/results
+curl https://ape-automated-prompt-evaluation.onrender.com/evals/1/results \
+  -H "X-API-Key: <your-api-key>"
 ```
  
 ---
@@ -114,6 +134,7 @@ curl https://ape-automated-prompt-evaluation.onrender.com/evals/1/results
 | HTTP client | httpx | Concurrent endpoint hits via `asyncio.gather` |
 | LLM judge | Groq (llama-3.3-70b-versatile) | OpenAI-compatible SDK, fast inference |
 | Database | PostgreSQL on Neon | Serverless, zero ops |
+| Auth | JWT + API keys | Human sessions via Bearer token; programmatic/CI access via hashed API keys |
 | Deployment | Render | Simple, fast cold starts acceptable at MVP |
  
 ---
@@ -127,6 +148,8 @@ curl https://ape-automated-prompt-evaluation.onrender.com/evals/1/results
 **`BackgroundTasks` over Celery** — Eval runs are kicked off as background tasks, keeping the MVP dependency-light. The upgrade path to Redis + Celery is clear when scale demands it.
  
 **Diff at read time** — No FK stored on the run for comparison. The previous run is resolved at query time via `triggered_at`, with an optional override via query param.
+ 
+**Dual auth model** — JWT for human sessions (30-minute expiry, stateless), API keys for programmatic and CI/CD access (hashed with SHA-256, never stored raw). Modeled after Anthropic and Stripe's key patterns. API keys are shown once on creation; only the hash lives in the database.
  
 ---
  
@@ -145,6 +168,8 @@ Create a `.env` file:
 DATABASE_URL=postgresql+asyncpg://user:password@host/dbname
 GROQ_API_KEY=your_groq_api_key
 GROQ_BASE_URL=https://api.groq.com/openai/v1
+SECRET_KEY=your_jwt_secret_key
+ALGORITHM=HS256
 ```
  
 Run migrations and start the server:
@@ -170,10 +195,8 @@ Safe prompt → 3/3 golden pairs pass. Switch to a vague, unsafe system prompt �
 - [ ] **Webhook support** — POST regression results to Slack or any URL on run completion
 - [ ] **Self-hosted judge model** — swap Groq for any OpenAI-compatible endpoint
 - [ ] **CLI wrapper** — Typer-based CLI around the HTTP API for local and CI use
-- [ ] **API key auth** — per-project authentication for multi-tenant use
 ---
  
 ## Why APE Exists
  
 Promptfoo was the closest alternative — acquired by OpenAI in March 2026 and folded into OpenAI Frontier (enterprise-only, OpenAI models only). APE is the independent, multi-provider, HTTP-native alternative.
- 
